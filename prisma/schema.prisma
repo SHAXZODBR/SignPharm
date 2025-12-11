@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Drug/Medication with full classification
+model Drug {
+  id                String    @id @default(cuid())
+  name              String    // Trade name
+  nameRu            String?   // Russian name
+  nameUz            String?   // Uzbek name
+  inn               String?   // International Nonproprietary Name
+  atxCode           String?   // ATX classification code
+  atxLevel1         String?   // Anatomical main group
+  atxLevel2         String?   // Therapeutic subgroup
+  atxLevel3         String?   // Pharmacological subgroup
+  atxLevel4         String?   // Chemical subgroup
+  atxLevel5         String?   // Chemical substance
+  therapeuticGroup  String?   // Therapeutic classification
+  form              String?   // Tablet, injection, capsule, etc.
+  dosage            String?   // 100mg, 5ml, etc.
+  activeSubstance   String?   // Chemical compound
+  manufacturer      String?   // Primary manufacturer
+  country           String?   // Country of origin
+  prescription      Boolean   @default(false) // Rx required
+  barcode           String?   // Product barcode
+  ephrmraCode       String?   // EPhMRA classification
+  registrationNum   String?   // Registration number
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  inventory         Inventory[]
+  transactions      Transaction[]
+}
+
+// Pharmacy Location
+model Pharmacy {
+  id          String    @id @default(cuid())
+  name        String
+  region      String
+  district    String?
+  address     String?
+  phone       String?
+  email       String?
+  manager     String?   // Manager name
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  inventory   Inventory[]
+  transactions Transaction[]
+}
+
+// Supplier/Manufacturer/Distributor
+model Supplier {
+  id          String    @id @default(cuid())
+  name        String
+  nameRu      String?
+  country     String?
+  type        String    // MANUFACTURER, DISTRIBUTOR, IMPORTER
+  contact     String?
+  phone       String?
+  email       String?
+  address     String?
+  inn         String?   // Tax ID
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  inventory   Inventory[]
+  purchases   Transaction[]
+}
+
+// Inventory per pharmacy
+model Inventory {
+  id            String    @id @default(cuid())
+  drugId        String
+  drug          Drug      @relation(fields: [drugId], references: [id], onDelete: Cascade)
+  pharmacyId    String
+  pharmacy      Pharmacy  @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+  supplierId    String?
+  supplier      Supplier? @relation(fields: [supplierId], references: [id])
+  quantity      Int       @default(0)
+  purchasePrice Float     // Cost price in UZS
+  salePrice     Float     // Retail price in UZS
+  purchasePriceUsd Float? // Cost price in USD
+  salePriceUsd  Float?    // Retail price in USD
+  batchNumber   String?
+  expiryDate    DateTime?
+  minStock      Int       @default(10) // Reorder point
+  maxStock      Int?      // Maximum stock level
+  location      String?   // Shelf/rack location
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([drugId, pharmacyId, batchNumber])
+}
+
+// Sales, Purchases & Transfer Transactions
+model Transaction {
+  id          String    @id @default(cuid())
+  type        String    // SALE, PURCHASE, TRANSFER_IN, TRANSFER_OUT, RETURN, ADJUSTMENT
+  drugId      String
+  drug        Drug      @relation(fields: [drugId], references: [id])
+  pharmacyId  String
+  pharmacy    Pharmacy  @relation(fields: [pharmacyId], references: [id])
+  supplierId  String?
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
+  quantity    Int
+  unitPrice   Float     // Price per unit
+  totalAmount Float     // Total = quantity * unitPrice
+  currency    String    @default("UZS") // UZS or USD
+  batchNumber String?
+  invoiceNum  String?   // Invoice/receipt number
+  notes       String?
+  createdAt   DateTime  @default(now())
+
+  @@index([pharmacyId, createdAt])
+  @@index([drugId, createdAt])
+  @@index([type, createdAt])
+}
+
+// ATX Classification Reference
+model AtxCategory {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  level       Int       // 1-5
+  name        String
+  nameRu      String?
+  nameUz      String?
+  parentCode  String?
+}
+
+// User Settings & Preferences
+model Settings {
+  id          String    @id @default(cuid())
+  key         String    @unique
+  value       String
+  updatedAt   DateTime  @updatedAt
+}
