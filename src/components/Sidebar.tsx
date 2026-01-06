@@ -2,14 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { 
-  LayoutDashboard, 
-  Pill, 
-  Package, 
-  Building2, 
-  Truck, 
-  ShoppingCart, 
-  BarChart3, 
+import {
+  LayoutDashboard,
+  Pill,
+  Package,
+  Building2,
+  Truck,
+  ShoppingCart,
+  BarChart3,
   Settings,
   ChevronDown,
   Globe
@@ -82,12 +82,12 @@ export default function Sidebar() {
               <Globe size={16} />
               {languages.find(l => l.code === lang)?.flag} {languages.find(l => l.code === lang)?.name}
             </span>
-            <ChevronDown size={16} style={{ 
+            <ChevronDown size={16} style={{
               transform: langMenuOpen ? 'rotate(180deg)' : 'rotate(0)',
               transition: 'transform 0.2s ease'
             }} />
           </button>
-          
+
           {langMenuOpen && (
             <div style={{
               position: 'absolute',
@@ -141,13 +141,6 @@ export default function Sidebar() {
           )}
         </div>
       </div>
-      
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </aside>
   )
 }

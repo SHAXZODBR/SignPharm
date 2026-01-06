@@ -2,14 +2,57 @@
 
 import { Search, Bell, User } from 'lucide-react'
 import { useLanguage } from '@/lib/LanguageContext'
+import { useState, useEffect } from 'react'
+
+interface AlertItem {
+  type: 'lowStock' | 'expiring'
+  message: string
+}
 
 export default function Header({ title, subtitle }: { title: string; subtitle?: string }) {
   const { t, lang } = useLanguage()
-  
-  const notifications = [
-    { id: 1, message: lang === 'ru' ? 'Мало товара: Парацетамол' : lang === 'uz' ? 'Kam qoldi: Paratsetamol' : 'Low stock: Paracetamol', type: 'warning' },
-    { id: 2, message: lang === 'ru' ? 'Истекает срок: Аспирин (5 дней)' : lang === 'uz' ? 'Muddati tugaydi: Aspirin (5 kun)' : 'Expiring: Aspirin (5 days)', type: 'danger' },
-  ]
+  const [alerts, setAlerts] = useState<AlertItem[]>([])
+
+  useEffect(() => {
+    async function fetchAlerts() {
+      try {
+        const res = await fetch('/api/dashboard')
+        if (res.ok) {
+          const data = await res.json()
+          const newAlerts: AlertItem[] = []
+
+          // Add low stock alerts
+          if (data.stats?.lowStockCount > 0) {
+            newAlerts.push({
+              type: 'lowStock',
+              message: lang === 'ru'
+                ? `Низкий запас: ${data.stats.lowStockCount} позиций`
+                : lang === 'uz'
+                  ? `Kam qoldi: ${data.stats.lowStockCount} pozitsiya`
+                  : `Low stock: ${data.stats.lowStockCount} items`
+            })
+          }
+
+          // Add expiring alerts
+          if (data.stats?.expiringCount > 0) {
+            newAlerts.push({
+              type: 'expiring',
+              message: lang === 'ru'
+                ? `Истекает срок: ${data.stats.expiringCount} позиций`
+                : lang === 'uz'
+                  ? `Muddati tugaydi: ${data.stats.expiringCount} pozitsiya`
+                  : `Expiring soon: ${data.stats.expiringCount} items`
+            })
+          }
+
+          setAlerts(newAlerts)
+        }
+      } catch (error) {
+        console.error('Failed to fetch alerts:', error)
+      }
+    }
+    fetchAlerts()
+  }, [lang])
 
   return (
     <header className="page-header">
@@ -18,7 +61,7 @@ export default function Header({ title, subtitle }: { title: string; subtitle?: 
           <h1 className="page-title">{title}</h1>
           {subtitle && <p className="page-subtitle">{subtitle}</p>}
         </div>
-        
+
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {/* Search */}
           <div className="search-input" style={{ width: '280px' }}>
@@ -35,7 +78,7 @@ export default function Header({ title, subtitle }: { title: string; subtitle?: 
           <div style={{ position: 'relative' }}>
             <button className="btn btn-icon btn-secondary">
               <Bell size={18} />
-              {notifications.length > 0 && (
+              {alerts.length > 0 && (
                 <span style={{
                   position: 'absolute',
                   top: '-4px',
@@ -52,7 +95,7 @@ export default function Header({ title, subtitle }: { title: string; subtitle?: 
                   color: 'white',
                   animation: 'pulse 2s infinite'
                 }}>
-                  {notifications.length}
+                  {alerts.length}
                 </span>
               )}
             </button>
@@ -65,13 +108,6 @@ export default function Header({ title, subtitle }: { title: string; subtitle?: 
           </button>
         </div>
       </div>
-      
-      <style jsx>{`
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.1); }
-        }
-      `}</style>
     </header>
   )
 }

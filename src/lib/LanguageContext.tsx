@@ -16,7 +16,7 @@ export const translations = {
     analytics: 'Аналитика',
     settings: 'Настройки',
     menu: 'Меню',
-    
+
     // Dashboard
     welcomeMessage: 'Добро пожаловать в PharmaCentral',
     totalDrugs: 'Всего препаратов',
@@ -38,7 +38,9 @@ export const translations = {
     allOperations: 'Все операции',
     today: 'Сегодня',
     share: 'Доля',
-    
+    overview: 'Обзор системы',
+    viewAll: 'Показать все',
+
     // Common
     add: 'Добавить',
     edit: 'Редактировать',
@@ -46,6 +48,7 @@ export const translations = {
     save: 'Сохранить',
     cancel: 'Отмена',
     search: 'Поиск',
+    noData: 'Нет данных',
     filter: 'Фильтр',
     filters: 'Фильтры',
     export: 'Экспорт',
@@ -70,7 +73,7 @@ export const translations = {
     showing: 'Показано',
     of: 'из',
     positions: 'позиций',
-    
+
     // Drugs
     drugName: 'Наименование препарата',
     drug: 'Препарат',
@@ -94,7 +97,7 @@ export const translations = {
     prescriptionDrug: 'Рецептурный препарат (Rx)',
     country: 'Страна',
     countryOfOrigin: 'Страна производства',
-    
+
     // Inventory
     inventoryManagement: 'Управление запасами и остатками по аптекам',
     purchasePrice: 'Цена закупки',
@@ -120,7 +123,7 @@ export const translations = {
     supplier: 'Поставщик',
     current: 'Текущий',
     min: 'Мин.',
-    
+
     // Transactions
     sale: 'Продажа',
     purchase: 'Закупка',
@@ -139,7 +142,20 @@ export const translations = {
     salesToday: 'Продажи сегодня',
     purchasesToday: 'Закупки сегодня',
     totalOperations: 'Всего операций',
-    
+    pointOfSale: 'Точка продаж',
+    currentOrder: 'Текущий заказ',
+    completeSale: 'Завершить продажу',
+    subtotal: 'Итого',
+    cartEmpty: 'Корзина пуста',
+    selectProducts: 'Выберите товары',
+    items: 'товаров',
+    startNewSale: 'Новая продажа',
+    viewSalesHistory: 'История продаж',
+    loadingProducts: 'Загрузка товаров...',
+    noProductsFound: 'Товары не найдены',
+    transactionCompleted: 'Транзакция успешно завершена',
+    checkoutFailed: 'Ошибка оплаты. Попробуйте снова.',
+
     // Pharmacies
     pharmacyNetwork: 'Управление аптечной сетью',
     pharmacy: 'Аптека',
@@ -158,7 +174,7 @@ export const translations = {
     allRegions: 'Все регионы',
     drugsCount: 'Препаратов',
     stock: 'Склад',
-    
+
     // Suppliers
     suppliersTitle: 'Производители, дистрибьюторы и импортеры',
     supplierName: 'Наименование поставщика',
@@ -180,7 +196,7 @@ export const translations = {
     orders: 'Заказов',
     turnover: 'Оборот',
     searchSuppliers: 'Поиск по названию, стране...',
-    
+
     // Analytics
     analyticsTitle: 'Статистика продаж, закупок и прибыли',
     salesAnalytics: 'Аналитика продаж',
@@ -202,7 +218,7 @@ export const translations = {
     salesByPharmacy: 'Продажи по аптекам',
     salesByCategory: 'Продажи по категориям',
     revenue: 'Выручка',
-    
+
     // Settings
     settingsTitle: 'Конфигурация системы',
     general: 'Общие',
@@ -258,13 +274,27 @@ export const translations = {
     gel: 'Гель',
     cream: 'Крем',
     syrup: 'Сироп',
-    
+    ointment: 'Мазь',
+    drops: 'Капли',
+
+    // CRUD operations
+    deleteDrug: 'Удалить препарат',
+    confirmDelete: 'Вы уверены, что хотите удалить',
+    noDrugsFound: 'Препараты не найдены',
+    addFirstDrug: 'Добавьте первый препарат в каталог',
+    noInventoryFound: 'Склад пуст',
+    deleteInventory: 'Удалить позицию',
+    selectDrug: 'Выберите препарат',
+    selectPharmacy: 'Выберите аптеку',
+    selectSupplier: 'Выберите поставщика',
+    invoiceNumber: 'Номер накладной',
+
     // Time
     minAgo: 'мин назад',
     hoursAgo: 'ч назад',
     daysAgo: 'дн назад',
   },
-  
+
   uz: {
     // Navigation
     dashboard: 'Boshqaruv paneli',
@@ -276,7 +306,7 @@ export const translations = {
     analytics: 'Tahlil',
     settings: 'Sozlamalar',
     menu: 'Menyu',
-    
+
     // Dashboard
     welcomeMessage: 'PharmaCentral-ga xush kelibsiz',
     totalDrugs: 'Jami dorilar',
@@ -298,7 +328,9 @@ export const translations = {
     allOperations: 'Barcha operatsiyalar',
     today: 'Bugun',
     share: 'Ulushi',
-    
+    overview: 'Tizim ko\'rinishi',
+    viewAll: 'Hammasini ko\'rish',
+
     // Common
     add: "Qo'shish",
     edit: 'Tahrirlash',
@@ -306,6 +338,7 @@ export const translations = {
     save: 'Saqlash',
     cancel: 'Bekor qilish',
     search: 'Qidirish',
+    noData: "Ma'lumotlar yo'q",
     filter: 'Filtr',
     filters: 'Filtrlar',
     export: 'Eksport',
@@ -330,7 +363,7 @@ export const translations = {
     showing: "Ko'rsatilmoqda",
     of: 'dan',
     positions: 'pozitsiya',
-    
+
     // Drugs
     drugName: 'Dori nomi',
     drug: 'Dori',
@@ -354,7 +387,7 @@ export const translations = {
     prescriptionDrug: 'Retseptli dori (Rx)',
     country: 'Davlat',
     countryOfOrigin: 'Ishlab chiqarish davlati',
-    
+
     // Inventory
     inventoryManagement: "Dorixonalar bo'yicha zaxira va qoldiqlarni boshqarish",
     purchasePrice: 'Sotib olish narxi',
@@ -380,7 +413,7 @@ export const translations = {
     supplier: 'Yetkazib beruvchi',
     current: 'Joriy',
     min: 'Min.',
-    
+
     // Transactions
     sale: 'Sotish',
     purchase: 'Sotib olish',
@@ -399,7 +432,20 @@ export const translations = {
     salesToday: 'Bugungi sotuvlar',
     purchasesToday: 'Bugungi xaridlar',
     totalOperations: 'Jami operatsiyalar',
-    
+    pointOfSale: 'Sotuv nuqtasi',
+    currentOrder: 'Joriy buyurtma',
+    completeSale: 'Sotuvni yakunlash',
+    subtotal: 'Jami',
+    cartEmpty: "Savat bo'sh",
+    selectProducts: 'Mahsulotlarni tanlang',
+    items: 'dona',
+    startNewSale: 'Yangi sotuv',
+    viewSalesHistory: 'Sotuvlar tarixi',
+    loadingProducts: 'Mahsulotlar yuklanmoqda...',
+    noProductsFound: 'Mahsulotlar topilmadi',
+    transactionCompleted: 'Tranzaksiya muvaffaqiyatli yakunlandi',
+    checkoutFailed: "Xatolik. Qayta urinib ko'ring.",
+
     // Pharmacies
     pharmacyNetwork: "Dorixona tarmog'ini boshqarish",
     pharmacy: 'Dorixona',
@@ -418,7 +464,7 @@ export const translations = {
     allRegions: 'Barcha viloyatlar',
     drugsCount: 'Dorilar',
     stock: 'Ombor',
-    
+
     // Suppliers
     suppliersTitle: "Ishlab chiqaruvchilar, distribyutorlar va importchilar",
     supplierName: 'Yetkazib beruvchi nomi',
@@ -440,7 +486,7 @@ export const translations = {
     orders: 'Buyurtmalar',
     turnover: 'Aylanma',
     searchSuppliers: 'Nom, davlat boyicha qidirish...',
-    
+
     // Analytics
     analyticsTitle: 'Sotuvlar, xaridlar va foyda statistikasi',
     salesAnalytics: 'Sotuvlar tahlili',
@@ -462,7 +508,7 @@ export const translations = {
     salesByPharmacy: "Dorixonalar bo'yicha sotuvlar",
     salesByCategory: "Kategoriyalar bo'yicha sotuvlar",
     revenue: 'Daromad',
-    
+
     // Settings
     settingsTitle: 'Tizim konfiguratsiyasi',
     general: 'Umumiy',
@@ -518,13 +564,27 @@ export const translations = {
     gel: 'Gel',
     cream: 'Krem',
     syrup: 'Sirop',
-    
+    ointment: 'Malham',
+    drops: 'Tomchilar',
+
+    // CRUD operations
+    deleteDrug: "Dorini o'chirish",
+    confirmDelete: "O'chirishni tasdiqlaysizmi",
+    noDrugsFound: 'Dorilar topilmadi',
+    addFirstDrug: "Katalogga birinchi dorini qo'shing",
+    noInventoryFound: 'Ombor bo\'sh',
+    deleteInventory: "Pozitsiyani o'chirish",
+    selectDrug: 'Dorini tanlang',
+    selectPharmacy: 'Dorixonani tanlang',
+    selectSupplier: 'Yetkazib beruvchini tanlang',
+    invoiceNumber: 'Faktura raqami',
+
     // Time
     minAgo: 'daqiqa oldin',
     hoursAgo: 'soat oldin',
     daysAgo: 'kun oldin',
   },
-  
+
   en: {
     // Navigation
     dashboard: 'Dashboard',
@@ -536,7 +596,7 @@ export const translations = {
     analytics: 'Analytics',
     settings: 'Settings',
     menu: 'Menu',
-    
+
     // Dashboard
     welcomeMessage: 'Welcome to PharmaCentral',
     totalDrugs: 'Total Drugs',
@@ -558,7 +618,9 @@ export const translations = {
     allOperations: 'All Operations',
     today: 'Today',
     share: 'Share',
-    
+    overview: 'System Overview',
+    viewAll: 'View All',
+
     // Common
     add: 'Add',
     edit: 'Edit',
@@ -566,6 +628,7 @@ export const translations = {
     save: 'Save',
     cancel: 'Cancel',
     search: 'Search',
+    noData: 'No data available',
     filter: 'Filter',
     filters: 'Filters',
     export: 'Export',
@@ -590,7 +653,7 @@ export const translations = {
     showing: 'Showing',
     of: 'of',
     positions: 'positions',
-    
+
     // Drugs
     drugName: 'Drug Name',
     drug: 'Drug',
@@ -614,7 +677,7 @@ export const translations = {
     prescriptionDrug: 'Prescription drug (Rx)',
     country: 'Country',
     countryOfOrigin: 'Country of origin',
-    
+
     // Inventory
     inventoryManagement: 'Stock and inventory management by pharmacy',
     purchasePrice: 'Purchase Price',
@@ -640,7 +703,7 @@ export const translations = {
     supplier: 'Supplier',
     current: 'Current',
     min: 'Min.',
-    
+
     // Transactions
     sale: 'Sale',
     purchase: 'Purchase',
@@ -659,7 +722,20 @@ export const translations = {
     salesToday: "Today's Sales",
     purchasesToday: "Today's Purchases",
     totalOperations: 'Total Operations',
-    
+    pointOfSale: 'Point of Sale',
+    currentOrder: 'Current Order',
+    completeSale: 'Complete Sale',
+    subtotal: 'Subtotal',
+    cartEmpty: 'Cart is empty',
+    selectProducts: 'Select products to start',
+    items: 'items',
+    startNewSale: 'Start New Sale',
+    viewSalesHistory: 'View Sales History',
+    loadingProducts: 'Loading products...',
+    noProductsFound: 'No products found',
+    transactionCompleted: 'Transaction completed successfully',
+    checkoutFailed: 'Checkout failed. Please try again.',
+
     // Pharmacies
     pharmacyNetwork: 'Pharmacy network management',
     pharmacy: 'Pharmacy',
@@ -678,7 +754,7 @@ export const translations = {
     allRegions: 'All Regions',
     drugsCount: 'Drugs',
     stock: 'Stock',
-    
+
     // Suppliers
     suppliersTitle: 'Manufacturers, distributors, and importers',
     supplierName: 'Supplier Name',
@@ -700,7 +776,7 @@ export const translations = {
     orders: 'Orders',
     turnover: 'Turnover',
     searchSuppliers: 'Search by name, country...',
-    
+
     // Analytics
     analyticsTitle: 'Sales, purchases, and profit statistics',
     salesAnalytics: 'Sales Analytics',
@@ -722,7 +798,7 @@ export const translations = {
     salesByPharmacy: 'Sales by Pharmacy',
     salesByCategory: 'Sales by Category',
     revenue: 'Revenue',
-    
+
     // Settings
     settingsTitle: 'System Configuration',
     general: 'General',
@@ -778,7 +854,21 @@ export const translations = {
     gel: 'Gel',
     cream: 'Cream',
     syrup: 'Syrup',
-    
+    ointment: 'Ointment',
+    drops: 'Drops',
+
+    // CRUD operations
+    deleteDrug: 'Delete Drug',
+    confirmDelete: 'Are you sure you want to delete',
+    noDrugsFound: 'No drugs found',
+    addFirstDrug: 'Add your first drug to the catalog',
+    noInventoryFound: 'Inventory is empty',
+    deleteInventory: 'Delete Item',
+    selectDrug: 'Select drug',
+    selectPharmacy: 'Select pharmacy',
+    selectSupplier: 'Select supplier',
+    invoiceNumber: 'Invoice Number',
+
     // Time
     minAgo: 'min ago',
     hoursAgo: 'h ago',
@@ -792,6 +882,7 @@ interface LanguageContextType {
   lang: Language
   setLang: (lang: Language) => void
   t: (key: TranslationKey) => string
+  formatCurrency: (value: number) => string
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
@@ -815,8 +906,16 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return translations[lang][key] || translations.ru[key] || key
   }
 
+  const formatCurrency = (value: number): string => {
+    const suffix = lang === 'en' ? ' UZS' : ' сум'
+    if (Math.abs(value) >= 1000000) {
+      return (value / 1000000).toFixed(2) + 'M' + suffix
+    }
+    return value.toLocaleString('ru-RU') + suffix
+  }
+
   return (
-    <LanguageContext.Provider value={{ lang, setLang: handleSetLang, t }}>
+    <LanguageContext.Provider value={{ lang, setLang: handleSetLang, t, formatCurrency }}>
       {children}
     </LanguageContext.Provider>
   )

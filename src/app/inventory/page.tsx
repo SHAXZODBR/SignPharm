@@ -1,32 +1,60 @@
 'use client'
 
 import Header from '@/components/Header'
+import Modal from '@/components/Modal'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import { useLanguage } from '@/lib/LanguageContext'
-import { useState } from 'react'
-import { 
-  Plus, 
-  Search, 
+import { useState, useEffect, useCallback } from 'react'
+import {
+  Plus,
+  Search,
   AlertTriangle,
   Package,
   ArrowLeftRight,
   Clock,
   Edit,
-  Trash2
+  Trash2,
+  Loader2,
 } from 'lucide-react'
 
-// Sample inventory data with translations
-const inventoryData = [
-  { id: '1', drug: { ru: 'Парацетамол 500мг', uz: 'Paratsetamol 500mg', en: 'Paracetamol 500mg' }, pharmacy: { ru: 'Аптека №1', uz: 'Dorixona №1', en: 'Pharmacy #1' }, supplier: 'Uzpharma', quantity: 350, minStock: 50, purchasePrice: 12000, salePrice: 15000, batch: 'PAR-2024-001', expiry: '2026-03-15' },
-  { id: '2', drug: { ru: 'Ибупрофен 400мг', uz: 'Ibuprofen 400mg', en: 'Ibuprofen 400mg' }, pharmacy: { ru: 'Аптека №1', uz: 'Dorixona №1', en: 'Pharmacy #1' }, supplier: 'Nobel Pharma', quantity: 180, minStock: 30, purchasePrice: 18000, salePrice: 25000, batch: 'IBU-2024-089', expiry: '2025-12-20' },
-  { id: '3', drug: { ru: 'Амоксициллин 500мг', uz: 'Amoksitsillin 500mg', en: 'Amoxicillin 500mg' }, pharmacy: { ru: 'Аптека №2', uz: 'Dorixona №2', en: 'Pharmacy #2' }, supplier: 'Sandoz', quantity: 45, minStock: 40, purchasePrice: 35000, salePrice: 48000, batch: 'AMX-2024-234', expiry: '2025-08-10' },
-  { id: '4', drug: { ru: 'Омепразол 20мг', uz: 'Omeprazol 20mg', en: 'Omeprazole 20mg' }, pharmacy: { ru: 'Аптека №1', uz: 'Dorixona №1', en: 'Pharmacy #1' }, supplier: "Dr. Reddy's", quantity: 220, minStock: 25, purchasePrice: 22000, salePrice: 30000, batch: 'OMP-2024-112', expiry: '2026-06-01' },
-  { id: '5', drug: { ru: 'Аспирин 100мг', uz: 'Aspirin 100mg', en: 'Aspirin 100mg' }, pharmacy: { ru: 'Аптека №3', uz: 'Dorixona №3', en: 'Pharmacy #3' }, supplier: 'Bayer', quantity: 8, minStock: 20, purchasePrice: 8000, salePrice: 12000, batch: 'ASP-2024-056', expiry: '2025-02-28' },
-  { id: '6', drug: { ru: 'Цефтриаксон 1г', uz: 'Seftriakson 1g', en: 'Ceftriaxone 1g' }, pharmacy: { ru: 'Аптека №2', uz: 'Dorixona №2', en: 'Pharmacy #2' }, supplier: 'Биоком', quantity: 3, minStock: 15, purchasePrice: 45000, salePrice: 62000, batch: 'CEF-2024-178', expiry: '2025-04-15' },
-  { id: '7', drug: { ru: 'Метформин 850мг', uz: 'Metformin 850mg', en: 'Metformin 850mg' }, pharmacy: { ru: 'Аптека №1', uz: 'Dorixona №1', en: 'Pharmacy #1' }, supplier: 'Merck', quantity: 150, minStock: 30, purchasePrice: 28000, salePrice: 38000, batch: 'MET-2024-301', expiry: '2026-09-20' },
-  { id: '8', drug: { ru: 'Лоратадин 10мг', uz: 'Loratadin 10mg', en: 'Loratadine 10mg' }, pharmacy: { ru: 'Аптека №3', uz: 'Dorixona №3', en: 'Pharmacy #3' }, supplier: 'Uzpharma', quantity: 95, minStock: 20, purchasePrice: 9000, salePrice: 14000, batch: 'LOR-2024-445', expiry: '2026-01-10' },
-]
+interface Drug {
+  id: string
+  name: string
+  nameRu?: string | null
+  nameUz?: string | null
+}
 
-function getExpiryDays(expiry: string) {
+interface Pharmacy {
+  id: string
+  name: string
+  nameRu?: string | null
+  nameUz?: string | null
+}
+
+interface Supplier {
+  id: string
+  name: string
+  nameRu?: string | null
+}
+
+interface InventoryItem {
+  id: string
+  drugId: string
+  pharmacyId: string
+  supplierId?: string | null
+  quantity: number
+  minStock: number
+  purchasePriceUZS: number
+  salePriceUZS: number
+  batchNumber?: string | null
+  expiryDate?: string | null
+  drug: Drug
+  pharmacy: Pharmacy
+  supplier?: Supplier | null
+}
+
+function getExpiryDays(expiry: string | null | undefined) {
+  if (!expiry) return 999
   const expiryDate = new Date(expiry)
   const today = new Date()
   const diffTime = expiryDate.getTime() - today.getTime()
@@ -35,25 +63,207 @@ function getExpiryDays(expiry: string) {
 
 export default function InventoryPage() {
   const { t, lang } = useLanguage()
+  const [inventory, setInventory] = useState<InventoryItem[]>([])
+  const [drugs, setDrugs] = useState<Drug[]>([])
+  const [pharmacies, setPharmacies] = useState<Pharmacy[]>([])
+  const [suppliers, setSuppliers] = useState<Supplier[]>([])
+  const [loading, setLoading] = useState(true)
+
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedPharmacy, setSelectedPharmacy] = useState('')
   const [showLowStock, setShowLowStock] = useState(false)
   const [showExpiring, setShowExpiring] = useState(false)
 
-  const pharmacies = [t('allPharmacies'), ...new Set(inventoryData.map(i => i.pharmacy[lang]))]
+  // Modal states
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
+  const [saving, setSaving] = useState(false)
 
-  const filteredInventory = inventoryData.filter(item => {
-    const matchesSearch = item.drug[lang].toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.batch.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesPharmacy = !selectedPharmacy || selectedPharmacy === t('allPharmacies') || item.pharmacy[lang] === selectedPharmacy
-    const matchesLowStock = !showLowStock || item.quantity <= item.minStock
-    const matchesExpiring = !showExpiring || getExpiryDays(item.expiry) <= 90
-    return matchesSearch && matchesPharmacy && matchesLowStock && matchesExpiring
+  // Form data
+  const [formData, setFormData] = useState({
+    drugId: '',
+    pharmacyId: '',
+    supplierId: '',
+    quantity: 0,
+    minStock: 10,
+    purchasePriceUZS: 0,
+    salePriceUZS: 0,
+    batchNumber: '',
+    expiryDate: '',
+    invoiceNumber: '',
   })
 
-  const lowStockCount = inventoryData.filter(i => i.quantity <= i.minStock).length
-  const expiringCount = inventoryData.filter(i => getExpiryDays(i.expiry) <= 90).length
-  const totalValue = inventoryData.reduce((sum, i) => sum + (i.quantity * i.salePrice), 0)
+  // Fetch inventory
+  const fetchInventory = useCallback(async () => {
+    try {
+      setLoading(true)
+      const params = new URLSearchParams()
+      if (searchQuery) params.set('search', searchQuery)
+      if (selectedPharmacy) params.set('pharmacyId', selectedPharmacy)
+      if (showLowStock) params.set('lowStock', 'true')
+      if (showExpiring) params.set('expiring', 'true')
+
+      const res = await fetch(`/api/inventory?${params}`)
+      const data = await res.json()
+      setInventory(data.inventory || [])
+    } catch (error) {
+      console.error('Failed to fetch inventory:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [searchQuery, selectedPharmacy, showLowStock, showExpiring])
+
+  // Fetch reference data
+  const fetchReferenceData = async () => {
+    try {
+      const [drugsRes, pharmaciesRes, suppliersRes] = await Promise.all([
+        fetch('/api/drugs'),
+        fetch('/api/pharmacies'),
+        fetch('/api/suppliers'),
+      ])
+
+      const drugsData = await drugsRes.json()
+      const pharmaciesData = await pharmaciesRes.json()
+      const suppliersData = await suppliersRes.json()
+
+      setDrugs(drugsData.drugs || [])
+      setPharmacies(pharmaciesData || [])
+      setSuppliers(suppliersData || [])
+    } catch (error) {
+      console.error('Failed to fetch reference data:', error)
+    }
+  }
+
+  useEffect(() => {
+    fetchInventory()
+    fetchReferenceData()
+  }, [fetchInventory])
+
+  const getName = (item: { name: string; nameRu?: string | null; nameUz?: string | null }) => {
+    if (lang === 'ru' && item.nameRu) return item.nameRu
+    if (lang === 'uz' && item.nameUz) return item.nameUz
+    return item.name || item.nameRu || ''
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'number' ? parseFloat(value) || 0 : value
+    }))
+  }
+
+  const resetForm = () => {
+    setFormData({
+      drugId: '',
+      pharmacyId: '',
+      supplierId: '',
+      quantity: 0,
+      minStock: 10,
+      purchasePriceUZS: 0,
+      salePriceUZS: 0,
+      batchNumber: '',
+      expiryDate: '',
+      invoiceNumber: '',
+    })
+  }
+
+  const openEditModal = (item: InventoryItem) => {
+    setSelectedItem(item)
+    setFormData({
+      drugId: item.drugId,
+      pharmacyId: item.pharmacyId,
+      supplierId: item.supplierId || '',
+      quantity: item.quantity,
+      minStock: item.minStock,
+      purchasePriceUZS: item.purchasePriceUZS,
+      salePriceUZS: item.salePriceUZS,
+      batchNumber: item.batchNumber || '',
+      expiryDate: item.expiryDate ? item.expiryDate.split('T')[0] : '',
+      invoiceNumber: '',
+    })
+    setShowEditModal(true)
+  }
+
+  const openDeleteConfirm = (item: InventoryItem) => {
+    setSelectedItem(item)
+    setShowDeleteConfirm(true)
+  }
+
+  // Create inventory (stock receiving)
+  const handleCreate = async () => {
+    try {
+      setSaving(true)
+      const res = await fetch('/api/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+
+      if (res.ok) {
+        setShowAddModal(false)
+        resetForm()
+        fetchInventory()
+      }
+    } catch (error) {
+      console.error('Failed to create inventory:', error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Update inventory
+  const handleUpdate = async () => {
+    if (!selectedItem) return
+
+    try {
+      setSaving(true)
+      const res = await fetch(`/api/inventory/${selectedItem.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+
+      if (res.ok) {
+        setShowEditModal(false)
+        setSelectedItem(null)
+        fetchInventory()
+      }
+    } catch (error) {
+      console.error('Failed to update inventory:', error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Delete inventory
+  const handleDelete = async () => {
+    if (!selectedItem) return
+
+    try {
+      setSaving(true)
+      const res = await fetch(`/api/inventory/${selectedItem.id}`, {
+        method: 'DELETE',
+      })
+
+      if (res.ok) {
+        setShowDeleteConfirm(false)
+        setSelectedItem(null)
+        fetchInventory()
+      }
+    } catch (error) {
+      console.error('Failed to delete inventory:', error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Calculate stats
+  const lowStockCount = inventory.filter(i => i.quantity <= i.minStock).length
+  const expiringCount = inventory.filter(i => getExpiryDays(i.expiryDate) <= 90).length
+  const totalValue = inventory.reduce((sum, i) => sum + (i.quantity * i.salePriceUZS), 0)
 
   function getStockStatus(quantity: number, minStock: number) {
     if (quantity <= 0) return { label: lang === 'ru' ? 'Нет в наличии' : lang === 'uz' ? 'Mavjud emas' : 'Out of stock', class: 'badge-danger' }
@@ -66,19 +276,151 @@ export default function InventoryPage() {
     return value.toLocaleString('ru-RU') + (lang === 'en' ? ' UZS' : ' сум')
   }
 
+  // Inventory form
+  const InventoryForm = ({ isEdit = false }: { isEdit?: boolean }) => (
+    <div className="form-grid">
+      {!isEdit && (
+        <>
+          <div className="form-group">
+            <label className="form-label">{t('drug')} *</label>
+            <select
+              name="drugId"
+              className="form-input form-select"
+              value={formData.drugId}
+              onChange={handleInputChange}
+              required
+            >
+              <option value="">{t('selectDrug')}</option>
+              {drugs.map(drug => (
+                <option key={drug.id} value={drug.id}>{getName(drug)}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">{t('pharmacy')} *</label>
+            <select
+              name="pharmacyId"
+              className="form-input form-select"
+              value={formData.pharmacyId}
+              onChange={handleInputChange}
+              required
+            >
+              <option value="">{t('selectPharmacy')}</option>
+              {pharmacies.map(pharmacy => (
+                <option key={pharmacy.id} value={pharmacy.id}>{getName(pharmacy)}</option>
+              ))}
+            </select>
+          </div>
+        </>
+      )}
+      <div className="form-group">
+        <label className="form-label">{t('supplier')}</label>
+        <select
+          name="supplierId"
+          className="form-input form-select"
+          value={formData.supplierId}
+          onChange={handleInputChange}
+        >
+          <option value="">{t('selectSupplier')}</option>
+          {suppliers.map(supplier => (
+            <option key={supplier.id} value={supplier.id}>{supplier.nameRu || supplier.name}</option>
+          ))}
+        </select>
+      </div>
+      <div className="form-group">
+        <label className="form-label">{t('quantity')} *</label>
+        <input
+          type="number"
+          name="quantity"
+          className="form-input"
+          value={formData.quantity}
+          onChange={handleInputChange}
+          min="0"
+        />
+      </div>
+      <div className="form-group">
+        <label className="form-label">{t('minStock')}</label>
+        <input
+          type="number"
+          name="minStock"
+          className="form-input"
+          value={formData.minStock}
+          onChange={handleInputChange}
+          min="0"
+        />
+      </div>
+      <div className="form-group">
+        <label className="form-label">{t('purchasePrice')} (UZS) *</label>
+        <input
+          type="number"
+          name="purchasePriceUZS"
+          className="form-input"
+          value={formData.purchasePriceUZS}
+          onChange={handleInputChange}
+          min="0"
+        />
+      </div>
+      <div className="form-group">
+        <label className="form-label">{t('salePrice')} (UZS) *</label>
+        <input
+          type="number"
+          name="salePriceUZS"
+          className="form-input"
+          value={formData.salePriceUZS}
+          onChange={handleInputChange}
+          min="0"
+        />
+      </div>
+      <div className="form-group">
+        <label className="form-label">{t('batch')}</label>
+        <input
+          type="text"
+          name="batchNumber"
+          className="form-input"
+          placeholder="PAR-2024-001"
+          value={formData.batchNumber}
+          onChange={handleInputChange}
+        />
+      </div>
+      <div className="form-group">
+        <label className="form-label">{t('expiryDate')}</label>
+        <input
+          type="date"
+          name="expiryDate"
+          className="form-input"
+          value={formData.expiryDate}
+          onChange={handleInputChange}
+        />
+      </div>
+      {!isEdit && (
+        <div className="form-group" style={{ gridColumn: 'span 2' }}>
+          <label className="form-label">{t('invoiceNumber')}</label>
+          <input
+            type="text"
+            name="invoiceNumber"
+            className="form-input"
+            placeholder="PO-100001"
+            value={formData.invoiceNumber}
+            onChange={handleInputChange}
+          />
+        </div>
+      )}
+    </div>
+  )
+
   return (
     <>
-      <Header 
-        title={t('inventory')} 
+      <Header
+        title={t('inventory')}
         subtitle={t('inventoryManagement')}
       />
-      
+
       <div className="page-content">
         {/* Quick Stats */}
         <div className="stats-grid" style={{ marginBottom: '1.5rem' }}>
           <div className="stat-card">
             <div className="stat-icon primary"><Package size={24} /></div>
-            <div className="stat-value">{inventoryData.length}</div>
+            <div className="stat-value">{inventory.length}</div>
             <div className="stat-label">{t('positionsOnStock')}</div>
           </div>
           <div className="stat-card success">
@@ -99,84 +441,198 @@ export default function InventoryPage() {
         </div>
 
         {/* Toolbar */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+        <div className="toolbar">
+          <div className="toolbar-left">
             <div className="search-input" style={{ width: '300px' }}>
               <Search className="search-input-icon" />
-              <input type="text" className="form-input" placeholder={t('searchInventory')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ paddingLeft: '2.75rem' }} />
+              <input
+                type="text"
+                className="form-input"
+                placeholder={t('searchInventory')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ paddingLeft: '2.75rem' }}
+              />
             </div>
-            <select className="form-input form-select" style={{ width: '180px' }} value={selectedPharmacy} onChange={(e) => setSelectedPharmacy(e.target.value)}>
-              {pharmacies.map(pharmacy => (<option key={pharmacy} value={pharmacy}>{pharmacy}</option>))}
+            <select
+              className="form-input form-select"
+              style={{ width: '180px' }}
+              value={selectedPharmacy}
+              onChange={(e) => setSelectedPharmacy(e.target.value)}
+            >
+              <option value="">{t('allPharmacies')}</option>
+              {pharmacies.map(pharmacy => (
+                <option key={pharmacy.id} value={pharmacy.id}>{getName(pharmacy)}</option>
+              ))}
             </select>
-            <button className={`btn ${showLowStock ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setShowLowStock(!showLowStock)}>
+            <button
+              className={`btn ${showLowStock ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setShowLowStock(!showLowStock)}
+            >
               <AlertTriangle size={16} /> {t('lowStock')}
             </button>
-            <button className={`btn ${showExpiring ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setShowExpiring(!showExpiring)}>
+            <button
+              className={`btn ${showExpiring ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setShowExpiring(!showExpiring)}
+            >
               <Clock size={16} /> {t('expiryAlert')}
             </button>
           </div>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button className="btn btn-secondary"><ArrowLeftRight size={16} /> {t('transfer')}</button>
-            <button className="btn btn-primary"><Plus size={16} /> {t('stockReceiving')}</button>
+          <div className="toolbar-right">
+            <button className="btn btn-secondary">
+              <ArrowLeftRight size={16} /> {t('transfer')}
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                resetForm()
+                setShowAddModal(true)
+              }}
+            >
+              <Plus size={16} /> {t('stockReceiving')}
+            </button>
           </div>
         </div>
 
         {/* Results */}
         <div style={{ marginBottom: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-          {t('showing')}: <strong style={{ color: 'var(--text-primary)' }}>{filteredInventory.length}</strong> {t('of')} {inventoryData.length} {t('positions')}
+          {t('showing')}: <strong style={{ color: 'var(--text-primary)' }}>{inventory.length}</strong> {t('positions')}
         </div>
 
         {/* Table */}
         <div className="card">
           <div className="card-body" style={{ padding: 0 }}>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>{t('drug')}</th>
-                  <th>{t('pharmacy')}</th>
-                  <th>{t('supplier')}</th>
-                  <th>{t('quantity')}</th>
-                  <th>{t('status')}</th>
-                  <th>{t('purchasePrice')}</th>
-                  <th>{t('salePrice')}</th>
-                  <th>{t('batch')}</th>
-                  <th>{t('expiryTo')}</th>
-                  <th>{t('actions')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredInventory.map(item => {
-                  const stockStatus = getStockStatus(item.quantity, item.minStock)
-                  const expiryDays = getExpiryDays(item.expiry)
-                  return (
-                    <tr key={item.id}>
-                      <td style={{ fontWeight: 600 }}>{item.drug[lang]}</td>
-                      <td>{item.pharmacy[lang]}</td>
-                      <td style={{ color: 'var(--text-secondary)' }}>{item.supplier}</td>
-                      <td><span style={{ fontWeight: 600 }}>{item.quantity}</span><span style={{ color: 'var(--text-muted)' }}> / {t('min')} {item.minStock}</span></td>
-                      <td><span className={`badge ${stockStatus.class}`}>{stockStatus.label}</span></td>
-                      <td>{formatCurrency(item.purchasePrice)}</td>
-                      <td style={{ color: 'var(--success)', fontWeight: 500 }}>{formatCurrency(item.salePrice)}</td>
-                      <td style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{item.batch}</td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          <span>{new Date(item.expiry).toLocaleDateString('ru-RU')}</span>
-                          {expiryDays <= 30 ? <span className="badge badge-danger">{expiryDays} {t('days')}</span> : expiryDays <= 90 ? <span className="badge badge-warning">{expiryDays} {t('days')}</span> : null}
-                        </div>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '0.25rem' }}>
-                          <button className="btn btn-icon btn-ghost"><Edit size={16} /></button>
-                          <button className="btn btn-icon btn-ghost" style={{ color: 'var(--danger)' }}><Trash2 size={16} /></button>
-                        </div>
-                      </td>
+            {loading ? (
+              <div className="empty-state">
+                <Loader2 className="spinner" style={{ margin: '0 auto' }} />
+                <p style={{ marginTop: '1rem' }}>{t('loading')}...</p>
+              </div>
+            ) : inventory.length === 0 ? (
+              <div className="empty-state">
+                <p className="empty-state-title">{t('noInventoryFound')}</p>
+                <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+                  <Plus size={16} /> {t('stockReceiving')}
+                </button>
+              </div>
+            ) : (
+              <div className="table-container">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>{t('drug')}</th>
+                      <th>{t('pharmacy')}</th>
+                      <th>{t('supplier')}</th>
+                      <th>{t('quantity')}</th>
+                      <th>{t('status')}</th>
+                      <th>{t('purchasePrice')}</th>
+                      <th>{t('salePrice')}</th>
+                      <th>{t('batch')}</th>
+                      <th>{t('expiryTo')}</th>
+                      <th>{t('actions')}</th>
                     </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {inventory.map(item => {
+                      const stockStatus = getStockStatus(item.quantity, item.minStock)
+                      const expiryDays = getExpiryDays(item.expiryDate)
+                      return (
+                        <tr key={item.id}>
+                          <td style={{ fontWeight: 600 }}>{getName(item.drug)}</td>
+                          <td>{getName(item.pharmacy)}</td>
+                          <td style={{ color: 'var(--text-secondary)' }}>
+                            {item.supplier ? (item.supplier.nameRu || item.supplier.name) : '-'}
+                          </td>
+                          <td>
+                            <span style={{ fontWeight: 600 }}>{item.quantity}</span>
+                            <span style={{ color: 'var(--text-muted)' }}> / {t('min')} {item.minStock}</span>
+                          </td>
+                          <td><span className={`badge ${stockStatus.class}`}>{stockStatus.label}</span></td>
+                          <td>{formatCurrency(item.purchasePriceUZS)}</td>
+                          <td style={{ color: 'var(--success)', fontWeight: 500 }}>{formatCurrency(item.salePriceUZS)}</td>
+                          <td style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{item.batchNumber || '-'}</td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <span>{item.expiryDate ? new Date(item.expiryDate).toLocaleDateString('ru-RU') : '-'}</span>
+                              {expiryDays <= 30 ? (
+                                <span className="badge badge-danger">{expiryDays} {t('days')}</span>
+                              ) : expiryDays <= 90 ? (
+                                <span className="badge badge-warning">{expiryDays} {t('days')}</span>
+                              ) : null}
+                            </div>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '0.25rem' }}>
+                              <button className="btn btn-icon btn-ghost" onClick={() => openEditModal(item)}>
+                                <Edit size={16} />
+                              </button>
+                              <button
+                                className="btn btn-icon btn-ghost"
+                                style={{ color: 'var(--danger)' }}
+                                onClick={() => openDeleteConfirm(item)}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Add Modal (Stock Receiving) */}
+        <Modal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          title={t('stockReceiving')}
+          size="lg"
+        >
+          <InventoryForm />
+          <div className="form-actions">
+            <button className="btn btn-secondary" onClick={() => setShowAddModal(false)}>{t('cancel')}</button>
+            <button
+              className={`btn btn-primary ${saving ? 'btn-loading' : ''}`}
+              onClick={handleCreate}
+              disabled={saving || !formData.drugId || !formData.pharmacyId}
+            >
+              <Plus size={16} /> {t('add')}
+            </button>
+          </div>
+        </Modal>
+
+        {/* Edit Modal */}
+        <Modal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          title={t('edit')}
+          size="lg"
+        >
+          <InventoryForm isEdit />
+          <div className="form-actions">
+            <button className="btn btn-secondary" onClick={() => setShowEditModal(false)}>{t('cancel')}</button>
+            <button
+              className={`btn btn-primary ${saving ? 'btn-loading' : ''}`}
+              onClick={handleUpdate}
+              disabled={saving}
+            >
+              {t('save')}
+            </button>
+          </div>
+        </Modal>
+
+        {/* Delete Confirmation */}
+        <ConfirmDialog
+          isOpen={showDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={handleDelete}
+          title={t('deleteInventory')}
+          message={`${t('confirmDelete')} ${selectedItem ? getName(selectedItem.drug) : ''}?`}
+          isLoading={saving}
+        />
       </div>
     </>
   )
