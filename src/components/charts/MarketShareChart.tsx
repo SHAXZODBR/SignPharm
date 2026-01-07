@@ -120,7 +120,7 @@ export default function MarketShareChart({
                             outerRadius={100}
                             paddingAngle={2}
                             dataKey="value"
-                            label={({ name, share }) => share > 5 ? `${share.toFixed(0)}%` : ''}
+                            label={(props: any) => props.share && props.share > 5 ? `${props.share.toFixed(0)}%` : ''}
                             labelLine={false}
                         >
                             {chartData.map((entry, index) => (
