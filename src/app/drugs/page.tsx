@@ -3,6 +3,7 @@
 import Header from '@/components/Header'
 import Modal from '@/components/Modal'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import ATXTreeSelector from '@/components/ATXTreeSelector'
 import { useLanguage } from '@/lib/LanguageContext'
 import { useState, useEffect, useCallback } from 'react'
 import {
@@ -15,6 +16,11 @@ import {
   Trash2,
   Eye,
   Loader2,
+  Globe,
+  Building2,
+  Pill,
+  ChevronDown,
+  X,
 } from 'lucide-react'
 
 interface Drug {
@@ -65,6 +71,19 @@ export default function DrugsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
 
+  // Advanced filter state
+  const [filterAtx, setFilterAtx] = useState('')
+  const [filterManufacturer, setFilterManufacturer] = useState('')
+  const [filterCountry, setFilterCountry] = useState('')
+  const [filterForm, setFilterForm] = useState('')
+  const [filterRxOtc, setFilterRxOtc] = useState<'all' | 'rx' | 'otc'>('all')
+  const [filterInn, setFilterInn] = useState('')
+
+  // Unique values for filter dropdowns
+  const [manufacturers, setManufacturers] = useState<string[]>([])
+  const [countries, setCountries] = useState<string[]>([])
+  const [forms, setForms] = useState<string[]>([])
+
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -83,7 +102,17 @@ export default function DrugsPage() {
 
       const res = await fetch(`/api/drugs?${params}`)
       const data = await res.json()
-      setDrugs(data.drugs || [])
+      const drugsList = data.drugs || []
+      setDrugs(drugsList)
+
+      // Extract unique values for filter dropdowns
+      const uniqueManufacturers = [...new Set(drugsList.map((d: Drug) => d.manufacturer).filter(Boolean))] as string[]
+      const uniqueCountries = [...new Set(drugsList.map((d: Drug) => d.country).filter(Boolean))] as string[]
+      const uniqueForms = [...new Set(drugsList.map((d: Drug) => d.form).filter(Boolean))] as string[]
+
+      setManufacturers(uniqueManufacturers.sort())
+      setCountries(uniqueCountries.sort())
+      setForms(uniqueForms.sort())
     } catch (error) {
       console.error('Failed to fetch drugs:', error)
     } finally {
@@ -94,6 +123,29 @@ export default function DrugsPage() {
   useEffect(() => {
     fetchDrugs()
   }, [fetchDrugs])
+
+  // Clear all filters
+  const clearFilters = () => {
+    setFilterAtx('')
+    setFilterManufacturer('')
+    setFilterCountry('')
+    setFilterForm('')
+    setFilterRxOtc('all')
+    setFilterInn('')
+    setSearchQuery('')
+  }
+
+  // Apply filters to drugs list
+  const filteredDrugs = drugs.filter(drug => {
+    if (filterAtx && !drug.atxCode?.startsWith(filterAtx)) return false
+    if (filterManufacturer && drug.manufacturer !== filterManufacturer) return false
+    if (filterCountry && drug.country !== filterCountry) return false
+    if (filterForm && drug.form !== filterForm) return false
+    if (filterRxOtc === 'rx' && !drug.prescription) return false
+    if (filterRxOtc === 'otc' && drug.prescription) return false
+    if (filterInn && !drug.inn?.toLowerCase().includes(filterInn.toLowerCase())) return false
+    return true
+  })
 
   // Get drug name based on language
   const getDrugName = (drug: Drug) => {
@@ -439,32 +491,137 @@ export default function DrugsPage() {
           </div>
         </div>
 
-        {/* ATX Filter Panel */}
+        {/* Advanced Filter Panel */}
         {showFilters && (
           <div className="card" style={{ marginBottom: '1.5rem' }}>
+            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 600, margin: 0 }}>
+                {lang === 'ru' ? 'Расширенные фильтры' : lang === 'uz' ? "Kengaytirilgan filtrlar" : 'Advanced Filters'}
+              </h4>
+              <button className="btn btn-ghost btn-sm" onClick={clearFilters}>
+                <X size={14} />
+                {lang === 'ru' ? 'Сбросить' : lang === 'uz' ? 'Tozalash' : 'Clear'}
+              </button>
+            </div>
             <div className="card-body">
-              <h4 style={{ marginBottom: '1rem', fontSize: '0.9rem', fontWeight: 600 }}>{t('atxClassification')}</h4>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {atxGroups.map(group => (
-                  <button
-                    key={group.code}
-                    className="btn btn-secondary btn-sm"
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}
-                    onClick={() => setSearchQuery(group.code)}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                {/* ATX Classification */}
+                <div className="form-group">
+                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Pill size={14} />
+                    {t('atxClassification')}
+                  </label>
+                  <ATXTreeSelector
+                    value={filterAtx}
+                    onChange={(code) => setFilterAtx(code)}
+                  />
+                </div>
+
+                {/* Manufacturer */}
+                <div className="form-group">
+                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Building2 size={14} />
+                    {t('manufacturer')}
+                  </label>
+                  <select
+                    className="form-input form-select"
+                    value={filterManufacturer}
+                    onChange={(e) => setFilterManufacturer(e.target.value)}
                   >
-                    <span style={{
-                      background: 'var(--primary)',
-                      color: 'white',
-                      padding: '0.125rem 0.5rem',
-                      borderRadius: '4px',
-                      fontSize: '0.75rem',
-                      fontWeight: 600
-                    }}>
-                      {group.code}
-                    </span>
-                    {group.name[lang]}
-                  </button>
-                ))}
+                    <option value="">{t('all')}</option>
+                    {manufacturers.map(m => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Country */}
+                <div className="form-group">
+                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Globe size={14} />
+                    {t('country')}
+                  </label>
+                  <select
+                    className="form-input form-select"
+                    value={filterCountry}
+                    onChange={(e) => setFilterCountry(e.target.value)}
+                  >
+                    <option value="">{t('all')}</option>
+                    {countries.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Form */}
+                <div className="form-group">
+                  <label className="form-label">{t('form')}</label>
+                  <select
+                    className="form-input form-select"
+                    value={filterForm}
+                    onChange={(e) => setFilterForm(e.target.value)}
+                  >
+                    <option value="">{t('all')}</option>
+                    {forms.map(f => (
+                      <option key={f} value={f}>{f}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Rx/OTC */}
+                <div className="form-group">
+                  <label className="form-label">Rx/OTC</label>
+                  <select
+                    className="form-input form-select"
+                    value={filterRxOtc}
+                    onChange={(e) => setFilterRxOtc(e.target.value as 'all' | 'rx' | 'otc')}
+                  >
+                    <option value="all">{t('all')}</option>
+                    <option value="rx">{lang === 'ru' ? 'Рецептурные (Rx)' : 'Prescription (Rx)'}</option>
+                    <option value="otc">{lang === 'ru' ? 'Безрецептурные (OTC)' : 'OTC'}</option>
+                  </select>
+                </div>
+
+                {/* INN Filter */}
+                <div className="form-group">
+                  <label className="form-label">{t('inn')}</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder={lang === 'ru' ? 'Поиск по МНН...' : 'Search INN...'}
+                    value={filterInn}
+                    onChange={(e) => setFilterInn(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Quick ATX buttons */}
+              <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                  {lang === 'ru' ? 'Быстрый выбор ATX группы:' : lang === 'uz' ? 'Tez ATX guruhini tanlash:' : 'Quick ATX group selection:'}
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {atxGroups.map(group => (
+                    <button
+                      key={group.code}
+                      className={`btn btn-sm ${filterAtx === group.code ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}
+                      onClick={() => setFilterAtx(filterAtx === group.code ? '' : group.code)}
+                    >
+                      <span style={{
+                        background: filterAtx === group.code ? 'white' : 'var(--primary)',
+                        color: filterAtx === group.code ? 'var(--primary)' : 'white',
+                        padding: '0.125rem 0.5rem',
+                        borderRadius: '4px',
+                        fontSize: '0.75rem',
+                        fontWeight: 600
+                      }}>
+                        {group.code}
+                      </span>
+                      {group.name[lang]}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -472,7 +629,11 @@ export default function DrugsPage() {
 
         {/* Results Count */}
         <div style={{ marginBottom: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-          {t('found')}: <strong style={{ color: 'var(--text-primary)' }}>{drugs.length}</strong> {lang === 'ru' ? 'препаратов' : lang === 'uz' ? 'dori' : 'drugs'}
+          {t('found')}: <strong style={{ color: 'var(--text-primary)' }}>{filteredDrugs.length}</strong>
+          {filteredDrugs.length !== drugs.length && (
+            <span style={{ color: 'var(--text-muted)' }}> ({lang === 'ru' ? 'из' : 'of'} {drugs.length})</span>
+          )}
+          {' '}{lang === 'ru' ? 'препаратов' : lang === 'uz' ? 'dori' : 'drugs'}
         </div>
 
         {/* Drugs Table */}
@@ -483,7 +644,7 @@ export default function DrugsPage() {
                 <Loader2 className="spinner" style={{ margin: '0 auto' }} />
                 <p style={{ marginTop: '1rem' }}>{t('loading')}...</p>
               </div>
-            ) : drugs.length === 0 ? (
+            ) : filteredDrugs.length === 0 ? (
               <div className="empty-state">
                 <p className="empty-state-title">{t('noDrugsFound')}</p>
                 <p className="empty-state-message">{t('addFirstDrug')}</p>
@@ -508,7 +669,7 @@ export default function DrugsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {drugs.map(drug => (
+                    {filteredDrugs.map(drug => (
                       <tr key={drug.id}>
                         <td style={{ fontWeight: 600 }}>{getDrugName(drug)}</td>
                         <td style={{ fontStyle: 'italic', color: 'var(--text-secondary)' }}>{drug.inn || '-'}</td>

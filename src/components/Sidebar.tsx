@@ -12,7 +12,8 @@ import {
   BarChart3,
   Settings,
   ChevronDown,
-  Globe
+  Globe,
+  FileSearch
 } from 'lucide-react'
 import { useState } from 'react'
 import { useLanguage, Language, TranslationKey } from '@/lib/LanguageContext'
@@ -23,6 +24,7 @@ const navItems = [
   { href: '/inventory', icon: Package, label: 'inventory' as TranslationKey },
   { href: '/pharmacies', icon: Building2, label: 'pharmacies' as TranslationKey },
   { href: '/suppliers', icon: Truck, label: 'suppliers' as TranslationKey },
+  { href: '/distributors', icon: FileSearch, label: 'distributors' as TranslationKey },
   { href: '/sales', icon: ShoppingCart, label: 'sales' as TranslationKey },
   { href: '/analytics', icon: BarChart3, label: 'analytics' as TranslationKey },
   { href: '/settings', icon: Settings, label: 'settings' as TranslationKey },

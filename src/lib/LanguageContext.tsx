@@ -14,6 +14,7 @@ export const translations = {
     suppliers: 'Поставщики',
     sales: 'Продажи',
     analytics: 'Аналитика',
+    distributors: 'Дистрибьюторы',
     settings: 'Настройки',
     menu: 'Меню',
 
@@ -304,6 +305,7 @@ export const translations = {
     suppliers: 'Yetkazib beruvchilar',
     sales: 'Sotuvlar',
     analytics: 'Tahlil',
+    distributors: 'Distribyutorlar',
     settings: 'Sozlamalar',
     menu: 'Menyu',
 
@@ -594,6 +596,7 @@ export const translations = {
     suppliers: 'Suppliers',
     sales: 'Sales',
     analytics: 'Analytics',
+    distributors: 'Distributors',
     settings: 'Settings',
     menu: 'Menu',
 
